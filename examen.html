@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚡ EXANI-II Mega Bomb Simulator 2026</title>
+    <style>
+        :root {
+            --bg-color: #060913;
+            --card-bg: #0d1326;
+            --accent-neon: #00f0ff;
+            --accent-purple: #9d4edd;
+            --success: #00e676;
+            --error: #ff1744;
+            --text: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border: #1e293b;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        
+        .app-container { width: 100%; max-width: 950px; background-color: var(--card-bg); border: 2px solid var(--border); border-radius: 16px; box-shadow: 0 20px 50px rgba(0, 240, 255, 0.15); padding: 30px; margin-top: 10px; min-height: 650px; }
+        .screen { display: none; }
+        .screen.active { display: block; }
+
+        .welcome-title { font-size: 2.6rem; text-align: center; font-weight: 800; background: linear-gradient(135deg, var(--accent-neon), var(--accent-purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 10px; }
+        .welcome-subtitle { text-align: center; color: var(--text-secondary); margin-bottom: 30px; }
+        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media(max-width: 600px) { .menu-grid { grid-template-columns: 1fr; } }
+        
+        .menu-card { background: #131b31; border: 1px solid var(--border); border-radius: 12px; padding: 20px; cursor: pointer; transition: all 0.2s ease; }
+        .menu-card:hover { transform: translateY(-3px); border-color: var(--accent-neon); box-shadow: 0 8px 20px rgba(0, 240, 255, 0.1); }
+        .menu-card h3 { margin-bottom: 6px; color: #fff; }
+        .menu-card p { color: var(--text-secondary); font-size: 0.88rem; }
+
+        .back-btn { background: none; border: 1px solid var(--border); color: var(--text-secondary); padding: 6px 14px; border-radius: 6px; cursor: pointer; margin-bottom: 15px; }
+        .back-btn:hover { border-color: var(--accent-neon); color: #fff; }
+        
+        .subject-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px; margin-top: 15px; }
+        .subject-btn { background: #1e293b; border: 1px solid var(--border); color: white; padding: 16px; border-radius: 8px; font-weight: 600; cursor: pointer; text-align: left; transition: background 0.2s; }
+        .subject-btn:hover { background: var(--accent-purple); border-color: #fff; }
+
+        .interactive-image-box { width: 100%; max-width: 380px; background: #161f38; border: 1px dashed var(--accent-neon); border-radius: 8px; margin: 12px auto; padding: 12px; display: flex; justify-content: center; align-items: center; }
+        .reading-text-box { background: #070a14; border: 1px solid var(--border); padding: 15px; border-radius: 8px; max-height: 180px; overflow-y: auto; margin-bottom: 15px; font-size: 0.95rem; line-height: 1.5; color: #cbd5e1; }
+
+        .flashcard-wrapper { perspective: 1000px; width: 100%; max-width: 650px; margin: 15px auto; height: 350px; }
+        .flashcard { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.4s; cursor: pointer; }
+        .flashcard.flipped { transform: rotateY(180deg); }
+        .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 14px; padding: 25px; display: flex; flex-direction: column; justify-content: center; align-items: center; overflow-y: auto; }
+        .card-front { background: #161f38; border: 2px solid var(--border); }
+        .card-back { background: #0b0f19; border: 2px solid var(--accent-neon); transform: rotateY(180deg); }
+
+        .quiz-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .timer-container { background: #1e293b; padding: 6px 14px; border-radius: 20px; font-weight: bold; border: 1px solid var(--accent-neon); }
+        .question-text { font-size: 1.2rem; font-weight: 600; margin-bottom: 15px; line-height: 1.4; }
+        .options-list { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+        .opt-btn { background: #131b31; border: 1px solid var(--border); color: var(--text); padding: 12px 15px; border-radius: 8px; cursor: pointer; text-align: left; font-size: 0.98rem; }
+        .opt-btn:hover { border-color: var(--accent-neon); background: #1a243f; }
+
+        .feedback-box { margin-top: 15px; padding: 12px; border-radius: 8px; font-weight: 600; display: none; font-size: 0.95rem; line-height: 1.4; }
+        .feedback-box.correct { display: block; background: rgba(0, 230, 118, 0.12); border: 1px solid var(--success); color: #b9f6ca; }
+        .feedback-box.wrong { display: block; background: rgba(255, 23, 68, 0.12); border: 1px solid var(--error); color: #ff8a80; }
+
+        .progress-bar-wrapper { background: #1e293b; height: 6px; width: 100%; border-radius: 3px; margin-bottom: 15px; overflow: hidden; }
+        .progress-bar-fill { background: var(--accent-neon); height: 100%; width: 0%; transition: width 0.2s; }
+        .primary-btn { background: var(--accent-neon); color: #000; border: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <div id="screen-home" class="screen active">
+            <h1 class="welcome-title">🚀 EXANI-II Bomb Suite 2026</h1>
+            <p class="welcome-subtitle">Entrenamiento Masivo de Alta Intensidad 100% alineado al temario oficial CENEVAL.</p>
+            
+            <div class="menu-grid">
+                <div class="menu-card" onclick="openSelection('flashcard')">
+                    <h3>🗂️ Mazo de Tarjetas (Filtro Inteligente)</h3>
+                    <p>Ideal para repasar conceptos rápido. Las preguntas que falles volverán a aparecer al final del mazo.</p>
+                </div>
+                <div class="menu-card" onclick="openSelection('timed')">
+                    <h3>⏱️ Simulador de Presión (25 Segundos)</h3>
+                    <p>Fuerza tu velocidad de descarte. Si el temporizador llega a cero, el reactivo cuenta como error.</p>
+                </div>
+                <div class="menu-card" onclick="openSelection('game')">
+                    <h3>🛡️ Modo Campaña (Supervivencia Extrema)</h3>
+                    <p>Mazo masivo aleatorio completo. Inicias con 3 corazones de vida. Un error te drena un corazón.</p>
+                </div>
+                <div class="menu-card" onclick="openDirect('MATEMÁTICAS', 'timed')">
+                    <h3>📐 Maratón de Pensamiento Matemático</h3>
+                    <p>Acceso directo intensivo para resolver ecuaciones, probabilidad, geometría analítica y álgebra.</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="screen-select" class="screen">
+            <button class="back-btn" onclick="goHome()">➔ Volver</button>
+            <h2 id="select-title" style="margin-bottom: 15px;">Elige el Módulo Temático</h2>
+            <div class="subject-grid">
+                <button class="subject-btn" onclick="startModule('PREMEDICINA')">🩺 Ciencias de la Salud / Premedicina</button>
+                <button class="subject-btn" onclick="startModule('BIOLOGÍA')">🧬 Biología Celular y Molecular</button>
+                <button class="subject-btn" onclick="startModule('MATEMÁTICAS')">📐 Pensamiento Matemático</button>
+                <button class="subject-btn" onclick="startModule('ESPAÑOL')">✍️ Comprensión Lectora / Redacción</button>
+                <button class="subject-btn" onclick="startModule('TODO')" style="background: linear-gradient(135deg, var(--accent-neon), var(--accent-purple)); color:#000;">🔥 MEGA BOMBA MEZCLADA (Mazo Total)</button>
+            </div>
+        </div>
+
+        <div id="screen-flashcard" class="screen">
+            <button class="back-btn" onclick="goHome()">➔ Salir</button>
+            <div class="quiz-header">
+                <span id="fc-badge" class="timer-container" style="background:var(--accent-purple); border:none;">Materia</span>
+                <span id="fc-count" style="color:var(--text-secondary); font-weight:bold;">Pendientes: 0</span>
+            </div>
+            <div class="progress-bar-wrapper"><div id="fc-progress" class="progress-bar-fill"></div></div>
+            
+            <div class="flashcard-wrapper" onclick="toggleFlip()">
+                <div id="fc-card" class="flashcard">
+                    <div class="card-face card-front">
+                        <div id="fc-reading-container"></div>
+                        <p id="fc-question" style="font-size:1.1rem; font-weight:600; text-align:center; line-height:1.4;"></p>
+                        <div id="fc-media-container"></div>
+                        <p style="margin-top:20px; font-size:0.8rem; color:var(--accent-neon); font-weight:bold; letter-spacing:1px;">👉 CLIC AQUÍ PARA REVELAR OPCIONES</p>
+                    </div>
+                    <div class="card-face card-back" onclick="event.stopPropagation();">
+                        <div id="fc-options" class="options-list"></div>
+                    </div>
+                </div>
+            </div>
+            <div id="fc-feedback" class="feedback-box"></div>
+            <button id="fc-next" class="primary-btn" style="display:none; float:right; margin-top:15px;" onclick="nextFC()">Siguiente Reactivo ➔</button>
+        </div>
+
+        <div id="screen-quiz" class="screen">
+            <button class="back-btn" onclick="goHome()">➔ Salir</button>
+            <div class="quiz-header">
+                <span id="qz-badge" class="timer-container" style="background:#1e293b; border:none;">Materia</span>
+                <div id="qz-timer" class="timer-container">⏱️ 25s</div>
+                <div id="qz-hearts" style="font-size:1.2rem;">❤️❤️❤️</div>
+            </div>
+            <div class="progress-bar-wrapper"><div id="qz-progress" class="progress-bar-fill"></div></div>
+            
+            <div id="qz-reading-container"></div>
+            <div id="qz-question" class="question-text">Pregunta...</div>
+            <div id="qz-media-container"></div>
+            <div id="qz-options" class="options-list"></div>
+            <div id="qz-feedback" class="feedback-box"></div>
+            
+            <div style="margin-top:20px; display:flex; justify-content:space-between; align-items:center;">
+                <div id="qz-score" style="font-weight:bold; color:var(--success); font-size:1.1rem;">PV: 0</div>
+                <button id="qz-next" class="primary-btn" style="display:none;" onclick="nextQuiz()">Avanzar Mazo ➔</button>
+            </div>
+        </div>
+
+        <div id="screen-results" class="screen" style="text-align:center; padding-top:40px;">
+            <h2 style="font-size:2.2rem; color:var(--accent-neon); margin-bottom:15px;">🏁 Bloque de Estudio Concluido</h2>
+            <p id="res-message" style="color:var(--text-secondary); margin-bottom:20px; font-size:1.1rem;"></p>
+            <div id="res-score" style="font-size:3.5rem; font-weight:bold; color:var(--success); margin-bottom:30px;">0 PV</div>
+            <button class="primary-btn" onclick="goHome()">Regresar al Panel de Control</button>
+        </div>
+    </div>
+
+    <script>
+        // =========================================================================
+        // BANCO CENTRAL DE REACTIVOS UNIFICADO (MEGA BOMBA EXANI-II)
+        // =========================================================================
+        const questionBank = [
+            // ------ CIENCIAS DE LA SALUD / PREMEDICINA ------
+            {
+                module: "PREMEDICINA",
+                question: "Una persona sana acude a su clínica local para recibir la vacuna anual contra la influenza. ¿En qué nivel de prevención y en qué etapa de la historia natural de la enfermedad se está actuando?",
+                options: [
+                    { text: "A) Prevención primaria, en el periodo prepatogénico.", correct: true },
+                    { text: "B) Prevención secundaria, en el periodo patogénico.", correct: false },
+                    { text: "C) Prevención primaria, en la etapa subclínica.", correct: false }
+                ],
+                tip: "💡 Ciencias de la Salud: Las vacunas pertenecen a la protección específica (prevención primaria) y se aplican antes de que el agente interactúe con el huésped, es decir, en el periodo prepatogénico.",
+                image: ""
+            },
+            {
+                module: "PREMEDICINA",
+                question: "¿Cuál es la estructura del sistema conducción cardíaco encargada de retrasar la señal eléctrica para permitir que las aurículas se contraigan por completo antes de que se activen los ventrículos?",
+                options: [
+                    { text: "A) Nodo sinusal o sinoauricular.", correct: false },
+                    { text: "B) Nodo auriculoventricular (AV).", correct: true },
+                    { text: "C) Fibras de Purkinje.", correct: false }
+                ],
+                tip: "💡 Morfofisiología: El nodo AV funciona como una estación de retraso eléctrico. El nodo sinusal inicia el impulso (marcapasos natural) y las fibras de Purkinje lo distribuyen al final.",
+                image: ""
+            },
+            {
+                module: "PREMEDICINA",
+                question: "Un paramédico evalúa a un paciente accidentado y nota que el pulso disminuye de manera anormal por debajo de 55 pulsaciones por minuto, mientras que su frecuencia respiratoria es de 26 respiraciones por minuto. ¿Qué términos clínicos describen correctamente estos signos?",
+                options: [
+                    { text: "A) Taquicardia y bradipnea.", correct: false },
+                    { text: "B) Bradicardia y taquipnea.", correct: true },
+                    { text: "C) Normocardia y eupnea.", correct: false }
+                ],
+                tip: "💡 Signos Vitales: Frecuencia cardíaca < 60 lpm es bradicardia. Frecuencia respiratoria > 20 rpm en adultos es taquipnea.",
+                image: ""
+            },
+            {
+                module: "PREMEDICINA",
+                question: "Un paciente masculino de 45 años con antecedentes familiares de hipertensión acude a consulta médica de rutina. Se le detecta una presión arterial de 130/85 mmHg. El médico le prescribe cambios en el estilo de vida, dieta hiposódica y ejercicio moderado. ¿A qué nivel de prevención corresponde esta acción según Leavell y Clark?",
+                options: [
+                    { text: "A) Prevención primaria.", correct: false },
+                    { text: "B) Prevención secundaria.", correct: true },
+                    { text: "C) Prevención terciaria.", correct: false }
+                ],
+                tip: "💡 Clave EXANI: Diagnóstico temprano y tratamiento oportuno para detener el avance de la enfermedad (cuando ya hay alteración clínica o subclínica) es PREVENCIÓN SECUNDARIA.",
+                image: ""
+            },
+            {
+                module: "PREMEDICINA",
+                question: "Identifique el eslabón de la cadena epidemiológica que actúa como el camino o vehículo por el cual el agente causal viaja desde el reservorio hasta el huésped susceptible:",
+                options: [
+                    { text: "A) Mecanismo de transmisión.", correct: true },
+                    { text: "B) Puerta de salida.", correct: false },
+                    { text: "C) Fuente de reserva.", correct: false }
+                ],
+                tip: "💡 Cadena Epidemiológica: El mecanismo de transmisión es el medio de transporte (directo o indirecto) que usa el patógeno.",
+                image: ""
+            },
+            {
+                module: "PREMEDICINA",
+                question: "¿Qué plano anatómico divide el cuerpo humano verticalmente en dos mitades asimétricas (anterior y posterior)?",
+                options: [
+                    { text: "A) Plano sagital.", correct: false },
+                    { text: "B) Plano transversal.", correct: false },
+                    { text: "C) Plano coronal o frontal.", correct: true }
+                ],
+                tip: "💡 Planimetría: El plano coronal o frontal corta al cuerpo de oreja a oreja, dividiéndolo en adelante (anterior/ventral) y atrás (posterior/dorsal).",
+                image: ""
+            },
+            {
+                module: "PREMEDICINA",
+                question: "Durante un partido de fútbol, un joven sufre un esguince de tobillo. Presenta dolor local agudo, inflamación moderada (edema) y coloración rojiza en la zona afectada debido al aumento del flujo sanguíneo. ¿Cuáles son los signos cardinales de la inflamación descritos en este caso?",
+                options: [
+                    { text: "A) Dolor, tumor y rubor.", correct: true },
+                    { text: "B) Calor, parestesia y rigidez.", correct: false },
+                    { text: "C) Necrosis, eritema y síncope.", correct: false }
+                ],
+                tip: "💡 Signos Clínicos: Celso describió los 4 signos cardinales de la inflamación: Rubor (rojo), Tumor (hinchazón/edema), Calor y Dolor. ¡Super frecuente!",
+                image: ""
+            },
+            {
+                module: "PREMEDICINA",
+                question: "Un paciente masculino de 50 años acude a consulta por presentar poliuria, polidipsia y pérdida de peso inexplicable. El médico sospecha de una alteración metabólica en la producción o acción de la insulina. ¿Qué órgano y qué tipo de células específicas están directamente relacionados con esta patología?",
+                options: [
+                    { text: "A) Páncreas, células alfa.", correct: false },
+                    { text: "B) Páncreas, células beta.", correct: true },
+                    { text: "C) Hígado, hepatocitos periféricos.", correct: false }
+                ],
+                tip: "💡 Ciencias de la Salud: La insulina es una hormona hipoglucemiante producida específicamente por las células beta de los islotes de Langerhans en el páncreas.",
+                image: ""
+            },
+            {
+                module: "PREMEDICINA",
+                question: "¿Cuál de las siguientes opciones de flujo sanguíneo describe el orden correcto del retorno de la sangre desoxigenada por las venas cavas hasta los pulmones?",
+                options: [
+                    { text: "A) Aurícula derecha → Válvula tricúspide → Ventrículo derecho → Válvula pulmonar.", correct: true },
+                    { text: "B) Aurícula izquierda → Válvula mitral → Ventrículo izquierdo → Válvula aórtica.", correct: false },
+                    { text: "C) Ventrículo derecho → Válvula tricúspide → Aurícula derecha → Arteria pulmonar.", correct: false }
+                ],
+                tip: "💡 Morfofisiología: El lado derecho del corazón maneja sangre desoxigenada. Entra por la aurícula derecha, pasa la tricúspide al ventrículo derecho y sale por la válvula pulmonar.",
+                image: ""
+            },
+            {
+                module: "PREMEDICINA",
+                question: "De acuerdo con la Historia Natural de la Enfermedad de Leavell y Clark, ¿en qué momento u horizonte clínico se considera que inicia el periodo patogénico?",
+                options: [
+                    { text: "A) En el momento en que el huésped entra en contacto con un ambiente insalubre.", correct: false },
+                    { text: "B) Cuando se presentan los primeros cambios tisulares o bioquímicos subclínicos debido al agente.", correct: true },
+                    { text: "C) Al momento de consolidarse una discapacidad o secuela irreversible.", correct: false }
+                ],
+                tip: "💡 Salud Pública: El periodo patogénico arranca tan pronto como el agente causa las primeras alteraciones celulares o tisulares en el huésped, aunque el paciente aún no note síntomas.",
+                image: ""
+            },
+            {
+                module: "PREMEDICINA",
+                question: "Un joven de 18 años sufre una caída de bicicleta e impacta la rodilla. ¿Cuál es el plano anatómico que te permitiría evaluar mejor una vista de perfil o lateral de la articulación?",
+                options: [
+                    { text: "A) Plano sagital.", correct: true },
+                    { text: "B) Plano coronal.", correct: false },
+                    { text: "C) Plano transversal.", correct: false }
+                ],
+                tip: "💡 Planimetría: El plano sagital divide al cuerpo en derecha e izquierda, lo que permite observar las estructuras desde una perspectiva lateral (de perfil).",
+                image: ""
+            },
+            {
+                module: "PREMEDICINA",
+                question: "Un paciente de 65 años acude a urgencias refiriendo dolor opresivo en el pecho que se irradia al brazo izquierdo y mandíbula, acompañado de sudoración fría. ¿A qué nivel de atención médica corresponde la gestión de esta urgencia cardiovascular?",
+                options: [
+                    { text: "A) Primer nivel de atención.", correct: false },
+                    { text: "B) Segundo nivel de atención.", correct: true },
+                    { text: "C) Módulo de prevención primaria.", correct: false }
+                ],
+                tip: "💡 Ciencias de la Salud: Las urgencias que requieren hospitalización, diagnóstico especializado o intervención inmediata (como un infarto) pertenecen al segundo o tercer nivel de atención médica.",
+                image: ""
+            },
+            {
+                module: "PREMEDICINA",
+                question: "¿Cuál es el componente de la sangre que carece de núcleo, posee forma de disco bicóncavo y contiene la proteína hemoglobina para el transporte de oxígeno celular?",
+                options: [
+                    { text: "A) Eritrocito o glóbulo rojo.", correct: true },
+                    { text: "B) Leucocito o glóbulo blanco.", correct: false },
+                    { text: "C) Trombocito o plaqueta.", correct: false }
+                ],
+                tip: "💡 Morfofisiología: Los eritrocitos maduros pierden el núcleo para maximizar el espacio disponible para transportar oxígeno mediante la hemoglobina.",
+                image: ""
+            },
+            {
+                module: "PREMEDICINA",
+                question: "Al evaluar la somatometría de un adulto en la consulta externa, se registra una estatura de 1.70 m y un peso de 90 kg. De acuerdo con el cálculo de su Índice de Masa Corporal (IMC ≈ 31.1), ¿en qué categoría diagnóstica se classifies?",
+                options: [
+                    { text: "A) Sobrepeso.", correct: false },
+                    { text: "B) Obesidad grado I.", correct: true },
+                    { text: "C) Peso normal o normopeso.", correct: false }
+                ],
+                tip: "💡 Salud Pública: Un IMC de 18.5 a 24.9 es normal; de 25 a 29.9 es sobrepeso; y a partir de 30.0 se clasifica formalmente como obesidad.",
+                image: ""
+            },
+            {
+                module: "PREMEDICINA",
+                question: "💡 ¿Qué hormona es secretada por las glándulas paratiroides con el objetivo principal de elevar los niveles de calcio en el plasma sanguíneo mediante la reabsorción ósea?",
+                options: [
+                    { text: "A) Calcitonina.", correct: false },
+                    { text: "B) Paratohormona (PTH).", correct: true },
+                    { text: "C) Aldosterona.", correct: false }
+                ],
+                tip: "💡 Sistema Endocrino: La PTH es hipercalcemiante (sube el calcio en sangre), mientras que la calcitocina (de la tiroides) es hipocalcemiante (baja el calcio).",
+                image: ""
+            },
+
+            // ------ BIOLOGÍA CELULAR Y MOLECULAR ------
+            {
+                module: "BIOLOGÍA",
+                question: "¿Cuál de las siguientes opciones describe correctamente el balance neto de productos obtenidos al finalizar la Glucólisis anaeróbica a partir de una molécula de glucosa?",
+                options: [
+                    { text: "A) 2 Piruvatos, 2 ATP netos y 2 NADH.", correct: true },
+                    { text: "B) 1 Acetil-CoA, 4 ATP y 2 FADH2.", correct: false },
+                    { text: "C) 6 CO2, 32 ATP y 6 H2O.", correct: false }
+                ],
+                tip: "💡 Bioquímica Celular: La glucólisis rompe la glucosa (6C) en dos piruvatos (3C) rindiendo un total neto de 2 ATP y 2 NADH.",
+                image: ""
+            },
+            {
+                module: "BIOLOGÍA",
+                question: "Un patólogo analiza una muestra microbiana y observa células sin núcleo celular definido, pared celular compuesta por peptidoglicano y material genético dispuesto de forma circular. ¿A qué grupo pertenece?",
+                options: [
+                    { text: "A) Hongos (Eucariotas).", correct: false },
+                    { text: "B) Bacterias (Procariotas).", correct: true },
+                    { text: "C) Virus (Acelulares).", correct: false }
+                ],
+                tip: "💡 Microbiología: El peptidoglicano (mureína) es el sello bioquímico exclusivo de las paredes de los organismos procariotas (bacterias).",
+                image: ""
+            },
+            {
+                module: "BIOLOGÍA",
+                question: "Si una molécula de ARNm maduro contiene la secuencia de codones 5'-AUG-GCA-UUC-3', ¿cuáles serán los anticodones correspondientes presentes en los ARNt?",
+                options: [
+                    { text: "A) 3'-UAC-CGU-AAG-5'", correct: true },
+                    { text: "B) 3'-TAC-CGT-AAG-5'", correct: false },
+                    { text: "C) 5'-UAC-CGU-AAG-3'", correct: false }
+                ],
+                tip: "💡 Genética Molecular: Los anticodones del ARNt son complementarios y antiparalelos al ARNm. Recuerda que el ARN usa Uracilo (U) en lugar de Timina (T).",
+                image: ""
+            },
+            {
+                module: "BIOLOGÍA",
+                question: "¿Cuál es el organelo celular delimitado por una doble membrana donde se lleva a cabo la cadena de transporte de electrones y la fosforilación oxidativa?",
+                options: [
+                    { text: "A) Mitocondria.", correct: true },
+                    { text: "B) Cloroplasto.", correct: false },
+                    { text: "C) Aparato de Golgi.", correct: false }
+                ],
+                tip: "💡 Biología Celular: La membrana mitocondrial interna alberga los complexes de la cadena respiratoria que generan la mayor cantidad de energía en la respiración celular.",
+                image: ""
+            },
+            {
+                module: "BIOLOGÍA",
+                question: "Durante la duplicación del ADN, ¿cuál es la enzima encargada de romper los puentes de hidrógeno para separar las dos cadenas de la doble hélice?",
+                options: [
+                    { text: "A) ADN Polimerasa.", correct: false },
+                    { text: "B) Helicasa.", correct: true },
+                    { text: "C) Topoisomerasa.", correct: false }
+                ],
+                tip: "💡 Genética Molecular: La helicasa abre la doble hélice como un cierre. La ADN polimerasa sintetiza la nueva cadena y la topoisomerasa evita el superenrollamiento.",
+                image: ""
+            },
+            {
+                module: "BIOLOGÍA",
+                question: "¿Cuál de las siguientes biomoléculas orgánicas está constituida por cadenas de aminoácidos unidos mediante enlaces peptídicos?",
+                options: [
+                    { text: "A) Carbohidratos.", correct: false },
+                    { text: "B) Lípidos complejos.", correct: false },
+                    { text: "C) Proteínas.", correct: true }
+                ],
+                tip: "💡 Bioquímica: Los aminoácidos son los bloques fundamentales de las proteínas. Los carbohidratos usan enlaces glucosídicos.",
+                image: ""
+            },
+            {
+                module: "BIOLOGÍA",
+                question: "Durante una práctica de laboratorio, se observa un tejido vegetal y se identifica que las células poseen una estructura rígida compuesta por celulosa. ¿A qué componente celular se hace referencia?",
+                options: [
+                    { text: "A) Membrana plasmática.", correct: false },
+                    { text: "B) Pared celular.", correct: true },
+                    { text: "C) Cápsula lipídica.", correct: false }
+                ],
+                tip: "💡 Biología Celular: La pared celular de las plantas está hecha de celulosa (las bacterias usan peptidoglicano) y brinda soporte mecánico y protección osmótica.",
+                image: ""
+            },
+            {
+                module: "BIOLOGÍA",
+                question: "¿Cuál de las siguientes fases de la interfase celular se caracteriza por la replicación o síntesis exacta del material genético (ADN)?",
+                options: [
+                    { text: "A) Fase G1.", correct: false },
+                    { text: "B) Fase S.", correct: true },
+                    { text: "C) Fase G2.", correct: false }
+                ],
+                tip: "💡 Ciclo Celular: La Fase S (Síntesis) es el periodo crítico donde el ADN se duplica por completo para que las células hijas reciban la carga correcta.",
+                image: ""
+            },
+            {
+                module: "BIOLOGÍA",
+                question: "¿Qué organelo citoplasmático no membranoso es el encargado de leer los codones del ARNm para ensamblar los aminoácidos en la síntesis proteica?",
+                options: [
+                    { text: "A) Ribosoma.", correct: true },
+                    { text: "B) Lisosoma.", correct: false },
+                    { text: "C) Nucléolo.", correct: false }
+                ],
+                tip: "💡 Biología Molecular: Los ribosomas son las fábricas de proteínas celulares que realizan la traducción uniendo los aminoácidos mediante enlaces peptídicos.",
+                image: ""
+            },
+            {
+                module: "BIOLOGÍA",
+                question: "Identifique el tipo de transporte de membrana celular que utiliza proteínas de canal para mover moléculas a favor de su gradiente, sin requerir gasto de ATP:",
+                options: [
+                    { text: "A) Difusión facilitada.", correct: true },
+                    { text: "B) Transporte activo primario.", correct: false },
+                    { text: "C) Ósmosis simple.", correct: false }
+                ],
+                tip: "💡 Membranas: Al ir a favor del gradiente no gasta energía (es pasivo), pero al usar una proteína de ayuda se le denomina 'difusión facilitada'.",
+                image: ""
+            },
+            {
+                module: "BIOLOGÍA",
+                question: "¿Cuál de las siguientes teorías celulares postula de forma explícita que toda célula viva proviene indispensablemente de otra célula preexistente mediante la división celular?",
+                options: [
+                    { text: "A) Postulado anatómico.", correct: false },
+                    { text: "B) Postulado de origen.", correct: true },
+                    { text: "C) Postulado fisiológico.", correct: false }
+                ],
+                tip: "💡 Teoría Celular: El postulado de origen ('Omnis cellula e cellula' de Virchow) dictamina que los seres vivos no surgen por generación espontánea.",
+                image: ""
+            },
+            {
+                module: "BIOLOGÍA",
+                question: "En una cadena de ADN de doble hélice, si el porcentaje de bases nitrogenadas de Adenina es del 30%, ¿cuál será el porcentaje exacto de Citocina esperado según las Leyes de Chargaff?",
+                options: [
+                    { text: "A) 30%", correct: false },
+                    { text: "B) 20%", correct: true },
+                    { text: "C) 40%", correct: false }
+                ],
+                tip: "💡 Leyes de Chargaff: A=T y G=C. Si A=30%, T=30% (suman 60%). El 40% restante se divide equitativamente entre Guanina (20%) y Citocina (20%).",
+                image: ""
+            },
+            {
+                module: "BIOLOGÍA",
+                question: "¿Cuál es el proceso metabólico celular que ocurre en el citoplasma en ausencia de oxígeno, donde el piruvato se reduce para regenerar NAD+ y producir lactato o etanol?",
+                options: [
+                    { text: "A) Fermentación.", correct: true },
+                    { text: "B) Ciclo de Krebs.", correct: false },
+                    { text: "C) Fosforilación oxidativa.", correct: false }
+                ],
+                tip: "💡 Bioquímica: La fermentación (láctica o alcohólica) ocurre en condiciones anaeróbicas para mantener activa la glucólisis al reciclar los transportadores NADH.",
+                image: ""
+            },
+            {
+                module: "BIOLOGÍA",
+                question: "¿Qué tipo de enlace químico une de manera covalente los nucleótidos consecutivos a lo largo de una misma hebra de ADN o ARN, conectando el carbono 3' con el fosfato del carbono 5'?",
+                options: [
+                    { text: "A) Enlace fosfodiéster.", correct: true },
+                    { text: "B) Puente de hidrógeno.", correct: false },
+                    { text: "C) Enlace peptídico.", correct: false }
+                ],
+                tip: "💡 Ácidos Nucleicos: El esqueleto de la hebra se une por enlaces fosfodiéster. Los puentes de hidrógeno solo unen las dos hebras opuestas por sus bases.",
+                image: ""
+            },
+
+            // ------ PENSAMIENTO MATEMÁTICAS ------
+            {
+                module: "MATEMÁTICAS",
+                question: "Determine el valor exacto de 'x' que satisface el siguiente sistema de ecuaciones lineales de 2x2:\n1) 2x + 3y = 12\n2) x - y = 1",
+                options: [
+                    { text: "A) x = 3", correct: true },
+                    { text: "B) x = 2", correct: false },
+                    { text: "C) x = 4", correct: false }
+                ],
+                tip: "💡 Álgebra Rápida: De la ec(2), despejas x = 1 + y. Sustituyes en ec(1): 2(1+y) + 3y = 12 -> 2 + 2y + 3y = 12 -> 5y = 10 -> y = 2. Por lo tanto, x = 1 + 2 = 3.",
+                image: ""
+            },
+            {
+                module: "MATEMÁTICAS",
+                question: "Si la ecuación de una parábola con vértice en el origen está dada por y² = 12x, ¿cuál es la coordenada exacta de su foco?",
+                options: [
+                    { text: "A) (3, 0)", correct: true },
+                    { text: "B) (0, 3)", correct: false },
+                    { text: "C) (6, 0)", correct: false }
+                ],
+                tip: "💡 Geometría Analítica: La forma de esta parábola horizontal es y² = 4px. Si 4p = 12, entonces p = 3. Al abrir hacia la derecha, el foco se ubica en (p, 0), es decir, (3, 0).",
+                image: ""
+            },
+            {
+                module: "MATEMÁTICAS",
+                question: "Al simplificar la expression algebraica (3x³y²)² / (9x⁴y³), ¿cuál es el resultado correcto aplicando las leyes de los exponentes?",
+                options: [
+                    { text: "A) x²y", correct: true },
+                    { text: "B) 3x²y", correct: false },
+                    { text: "C) xy²", correct: false }
+                ],
+                tip: "💡 Álgebra: Primero elevas el numerador: (3x³y²)² = 9x⁶y⁴. Luego divides entre el denominador: (9x⁶y⁴) / (9x⁴y³) = x^(6-4) * y^(4-3) = x²y.",
+                image: ""
+            },
+            {
+                module: "MATEMÁTICAS",
+                question: "En un grupo hay 8 alumnos de Medicina y 4 de Enfermería. Si se seleccionan consecutivamente a dos alumnos al azar sin reemplazo, ¿cuál es la probabilidad de que ambos sean de Enfermería?",
+                options: [
+                    { text: "A) 1/11", correct: true },
+                    { text: "B) 1/9", correct: false },
+                    { text: "C) 2/33", correct: false }
+                ],
+                tip: "💡 Probabilidad Compuesta: Para el primero la probabilidad es 4/12 (1/3). Al no haber reemplazo, quedan 3 de Enfermería y 11 totales, por lo que la segunda es 3/11. Multiplicas: (4/12) * (3/11) = 12/132, que simplificado es 1/11.",
+                image: ""
+            },
+            {
+                module: "MATEMÁTICAS",
+                question: "Calcule la pendiente (m) de la recta que pasa de forma exacta por los puntos coordenados P1(-3, 4) y P2(5, -2):",
+                options: [
+                    { text: "A) m = -3/4", correct: true },
+                    { text: "B) m = 3/4", correct: false },
+                    { text: "C) m = -4/3", correct: false }
+                ],
+                tip: "💡 Geometría Analítica: m = (y2 - y1) / (x2 - x1). Sustituyendo: m = (-2 - 4) / (5 - (-3)) = -6 / 8 = -3/4.",
+                image: ""
+            },
+            {
+                module: "MATEMÁTICAS",
+                question: "Determine los valores de 'x' que solucionan la siguiente ecuación cuadrática por factorización: x² - 5x + 6 = 0",
+                options: [
+                    { text: "A) x = 2, x = 3", correct: true },
+                    { text: "B) x = -2, x = -3", correct: false },
+                    { text: "C) x = 1, x = 6", correct: false }
+                ],
+                tip: "💡 Álgebra: Buscas dos números que multiplicados den +6 y sumados den -5. Esos son (-2) y (-3). Al igualar los factores (x-2)(x-3)=0 a cero, los signos cambian a +2 y +3.",
+                image: ""
+            },
+            {
+                module: "MATEMÁTICAS",
+                question: "Una urna contiene 6 esferas rojas, 4 esferas azules y 2 esferas verdes. Si se extrae una completamente al azar, ¿cuál es la probabilidad de que NO sea roja?",
+                options: [
+                    { text: "A) 1/2 (50%)", correct: true },
+                    { text: "B) 1/3 (33.33%)", correct: false },
+                    { text: "C) 2/3 (66.66%)", correct: false }
+                ],
+                tip: "💡 Estadística: Total de esferas = 12. Las que NO son rojas son las azules y verdes (4 + 2 = 6). La probabilidad es 6/12, lo que equivale a 1/2.",
+                image: ""
+            },
+            {
+                module: "MATEMÁTICAS",
+                question: "Dada la expresión matemática (4x²y³) * (-2x⁴y), simplifique aplicando las leyes de los exponentes:",
+                options: [
+                    { text: "A) -8x⁶y⁴", correct: true },
+                    { text: "B) -8x⁸y³", correct: false },
+                    { text: "C) 2x⁶y⁴", correct: false }
+                ],
+                tip: "💡 Álgebra: Multiplicas coeficientes: 4 * -2 = -8. Para las variables con la misma base, sumas sus exponentes: x^(2+4) = x⁶, y^(3+1) = y⁴.",
+                image: ""
+            },
+            {
+                module: "MATEMÁTICAS",
+                question: "Determine el valor simplificado del siguiente límite matemático cuando x tiende a 3:\nlim (x² - 9) / (x - 3)",
+                options: [
+                    { text: "A) 6", correct: true },
+                    { text: "B) 0", correct: false },
+                    { text: "C) Indeterminado (0/0)", correct: false }
+                ],
+                tip: "💡 Cálculo/Álgebra: Al sustituir directo da 0/0. Factorizas el numerador como diferencia de cuadrados: (x-3)(x+3). Cancelas (x-3) y te queda x+3. Evaluando: 3+3 = 6.",
+                image: ""
+            },
+            {
+                module: "MATEMÁTICAS",
+                question: "Si la varianza de un conjunto de datos estadísticos recopilados en una clínica es exactamente igual a 16, ¿cuál es el valor de su desviación estándar?",
+                options: [
+                    { text: "A) 4", correct: true },
+                    { text: "B) 8", correct: false },
+                    { text: "C) 256", correct: false }
+                ],
+                tip: "💡 Estadística: La desviación estándar (σ) es simplemente la raíz cuadrada positiva de la varianza (σ²). La raíz de 16 es 4.",
+                image: ""
+            },
+            {
+                module: "MATEMÁTICAS",
+                question: "Un estudiante responde un examen simulado de 10 preguntas. Si cada reactivo tiene 3 opciones independientes y contesta todo completamente al azar, ¿qué modelo de distribución probabilística modela esta situación?",
+                options: [
+                    { text: "A) Distribución Normal.", correct: false },
+                    { text: "B) Distribución Binomial.", correct: true },
+                    { text: "C) Distribución de Poisson.", correct: false }
+                ],
+                tip: "💡 Probabilidad: El experimento tiene un número fijo de ensayos (n=10) y solo dos resultados posibles por reactivo (éxito o fracaso), lo cual define una distribución binomial.",
+                image: ""
+            },
+            {
+                module: "MATEMÁTICAS",
+                question: "¿Cuál es el valor del ángulo de inclinación de una recta si se conoce de forma exacta que su pendiente (m) es igual a 1?",
+                options: [
+                    { text: "A) 45°", correct: true },
+                    { text: "B) 90°", correct: false },
+                    { text: "C) 0°", correct: false }
+                ],
+                tip: "💡 Trigonometría: La pendiente es igual a la tangente del ángulo (m = tan(θ)). Si m = 1, entonces θ = arctan(1) = 45°.",
+                image: ""
+            },
+
+            // ------ ESPAÑOL Y REDACCIÓN INDIRECTA ------
+            {
+                module: "ESPAÑOL",
+                question: "Seleccione la opción que presenta una redacción académica correcta, evitando redundancias viciosas o pleonasmos:",
+                options: [
+                    { text: "A) El médico le pidió que ingresara adentro del consultorio inmediatamente.", correct: false },
+                    { text: "B) La investigación concluyó con un resultado totalmente viable para la comunidad.", correct: true },
+                    { text: "C) En ese hospital suelen atender a una población de niños menores de edad.", correct: false }
+                ],
+                tip: "💡 Redacción Indirecta: 'Ingresar adentro' y 'niños menores de edad' son redundancias que restan formalidad académica en el examen.",
+                image: ""
+            },
+            {
+                module: "ESPAÑOL",
+                question: "Identifique el enunciado que hace un uso correcto de los signos de puntuación, evitando la coma entre sujeto y verbo:",
+                options: [
+                    { text: "A) El reactivo más complejo del examen, provocó confusión en los estudiantes.", correct: false },
+                    { text: "B) Los estudiantes de ciencias de la salud, que estudiaron la guía, aprobon sin problemas.", correct: true },
+                    { text: "C) Quienes no organizaron su tiempo de estudio, obtuvieron un puntaje bajo.", correct: false }
+                ],
+                tip: "💡 Redacción Indirecta: Nunca se coloca una coma directamente entre el sujeto y su verbo (coma criminal), a menos que se trate de una oración subordinada explicativa encerrada entre dos comas, como en la opción B.",
+                image: ""
+            },
+            {
+                module: "ESPAÑOL",
+                question: "Seleccione la opción donde se emplee correctamente la grafía diacrítica según el contexto de la oración:",
+                options: [
+                    { text: "A) Sé que el examen es pesado, pero confío en mi preparación.", correct: true },
+                    { text: "B) Se que el examen es pesado, pero confío en mí preparación.", correct: false },
+                    { text: "C) Sé que él examen es pesado, pero confío en mi preparación.", correct: false }
+                ],
+                tip: "💡 Redacción Indirecta: 'Sé' lleva tilde por ser del verbo saber. 'Mi' aquí funciona como adjetivo posesivo (mi preparación), por lo que no lleva tilde. 'El' funciona como artículo de examen, tampoco lleva.",
+                image: ""
+            },
+            {
+                module: "ESPAÑOL",
+                question: "Seleccione la opción que presenta una redacción formal correcta, evitando el uso incorrecto del gerundio de posterioridad:",
+                options: [
+                    { text: "A) El científico analizó la muestra, descubriendo el patrón al día siguiente.", correct: false },
+                    { text: "B) El científico analizó la muestra y descubrió el patrón al día siguiente.", correct: true },
+                    { text: "C) El científico analizando la muestra descubrió el patrón del día siguiente.", correct: false }
+                ],
+                tip: "💡 Redacción Indirecta: El gerundio (-ando, -endo) expresa acciones simultáneas o anteriores a la principal, nunca acciones posteriores en el tiempo. La opción B corrige el vicio usando una conjunción.",
+                image: ""
+            },
+            {
+                module: "ESPAÑOL",
+                question: "Identifique cuál de los siguientes enunciados utiliza de forma normativa las mayúsculas de acuerdo con las reglas de la RAE:",
+                options: [
+                    { text: "A) El doctor Martínez asistió al Congreso Internacional de Cardiología el pasado Martes.", correct: false },
+                    { text: "B) El doctor Martínez asistió al Congreso Internacional de Cardiología el pasado martes.", correct: true },
+                    { text: "C) El Doctor Martínez asistió al congreso internacional de cardiología el pasado martes.", correct: false }
+                ],
+                tip: "💡 Redacción Indirecta: Los nombres de eventos institucionales van con mayúscula (Congreso Internacional de Cardiología). Los días de la semana (martes) y los títulos profesionales (doctor) van con minúscula.",
+                image: ""
+            },
+            {
+                module: "ESPAÑOL",
+                question: "Seleccione la opción que contiene un uso normativo de la ortografía y de las grafías (g/j):",
+                options: [
+                    { text: "A) La exhumación del cuerpo se realizó bajo un estricto protocolo civil.", correct: true },
+                    { text: "B) Es crucial escojer un método de esterilización adecuado para el laboratorio.", correct: false },
+                    { text: "C) El tratamiento produjo una reducción notable en la inflamación tisular.", correct: true }
+                ],
+                tip: "💡 Redacción Indirecta: Los verbos terminados en '-ger' y '-gir' se escriben con G (escoger, dirigir), a excepción de tejer y crujir. 'Escojer' con J es un error ortográfico en el examen.",
+                image: ""
+            }, // <--- ¡AQUÍ ESTABA EL ERROR! Faltaba esta coma en tu archivo original.
+            {
+                module: "ESPAÑOL",
+                question: "Seleccione la opción que contiene un enunciado con un error de concordancia gramatical entre el sujeto y su núcleo verbal:",
+                options: [
+                    { text: "A) El grupo de pasantes de medicina asistieron al congreso nacional.", correct: true },
+                    { text: "B) La mayoría de la población aprobó las nuevas medidas de salud.", correct: false },
+                    { text: "C) El equipo médico determinó suspender las cirugías no urgentes.", correct: false }
+                ],
+                tip: "💡 Redacción Indirecta: El sujeto 'El grupo' es un sustantivo colectivo singular, por lo que el verbo debe ir en singular ('asistió'), no en plural ('asistieron').",
+                image: ""
+            },
+            {
+                module: "ESPAÑOL",
+                question: "Identifique cuál de las siguientes palabras requiere obligatoriamente el uso de acentuación ortográfica (tilde) por romper el diptongo (hiato acentual):",
+                options: [
+                    { text: "A) Biologia", correct: true },
+                    { text: "B) Farmacia", correct: false },
+                    { text: "C) Criterio", correct: false }
+                ],
+                tip: "💡 Ortografía: Al pronunciar 'Bio-lo-gí-a', la fuerza cae en la vocal cerrada 'i', destruyendo el diptongo y forzando un hiato que siempre se tilda, ignorando las reglas generales de las graves.",
+                image: ""
+            },
+            {
+                module: "ESPAÑOL",
+                question: "Seleccione la opción que funciona como un conector discursivo de carácter adversativo, útil para introducir una restricción u oposición directa:",
+                options: [
+                    { text: "A) Por lo tanto,", correct: false },
+                    { text: "B) No obstante,", correct: true },
+                    { text: "C) Asimismo,", correct: false }
+                ],
+                tip: "💡 Cohesión Textual: 'No obstante', 'sin embargo' y 'pero' son conectores adversativos. 'Por lo tanto' es consecutivo y 'asimismo' es de adición.",
+                image: ""
+            },
+            {
+                module: "ESPAÑOL",
+                question: "En un texto de divulgación científica sobre epidemiología, ¿cuál es la función del lenguaje que debe predominar para garantizar la objetividad y precisión de los datos presentados?",
+                options: [
+                    { text: "A) Función referencial o informativa.", correct: true },
+                    { text: "B) Función apelativa o conativa.", correct: false },
+                    { text: "C) Función poética o estética.", correct: false }
+                ],
+                tip: "💡 Comprensión Lectora: Los textos científicos y académicos buscan transmitir hechos objetivos y realidades del entorno, empleando la función referencial.",
+                image: ""
+            },
+
+            // ====== BLOQUE DE NUEVAS PREGUNTAS INTEGRADAS ======
+
+            // ------ CIENCIAS DE LA SALUD / PREMEDICINA (NUEVAS) ------
+            {
+                module: "PREMEDICINA",
+                question: "Un paciente de 28 años ingresa al servicio de urgencias tras sufrir una herida punzocortante en el tórax. Presenta dificultad severa para respirar, ausencia de ruidos respiratorios en el hemitórax izquierdo y una coloración azulada en los labios (cianosis). ¿Qué cavidad anatómica y qué complicación clínica se identifican prioritariamente?",
+                options: [
+                    { text: "A) Cavidad pleural y neumotórax.", correct: true },
+                    { text: "B) Cavidad pericárdica y taponamiento.", correct: false },
+                    { text: "C) Cavidad peritoneal y hemoperitoneo.", correct: false }
+                ],
+                tip: "💡 Morfofisiología: Los pulmones están contenidos en la cavidad pleural. La entrada de aire por una herida rompe la presión negativa, colapsando el pulmón (neumotórax).",
+                image: ""
+            },
+            {
+                module: "PREMEDICINA",
+                question: "Durante un examen de salud escolar, se detecta que un niño de 8 años no cuenta con el esquema completo de la vacuna Triple Viral (SRP). ¿Qué tipo de inmunidad se busca generar en el menor y contra qué patologías protege específicamente esta vacuna?",
+                options: [
+                    { text: "A) Inmunidad activa artificial; Sarampión, Rubeola y Parotiditis.", correct: true },
+                    { text: "B) Inmunidad pasiva artificial; Sífilis, Rinovirus y Pertussis.", correct: false },
+                    { text: "C) Inmunidad activa natural; Sarampión, Resfriado y Papiloma.", correct: false }
+                ],
+                tip: "💡 Inmunología: Las vacunas inducen al cuerpo a generar sus propios anticuerpos (Activa) mediante intervención médica (Artificial). SRP = Sarampión, Rubeola y Parotiditis.",
+                image: ""
+            },
+            {
+                module: "PREMEDICINA",
+                question: "A la consulta externa acude una paciente embarazada de 32 semanas para su control prenatal. El médico le prescribe suplementación con hierro y ácido fólico, además de orientarla sobre signos de alarma como la preeclampsia. ¿En qué nivel de prevención y periodo de la enfermedad se está actuando?",
+                options: [
+                    { text: "A) Prevención primaria, periodo prepatogénico.", correct: true },
+                    { text: "B) Prevención secundaria, periodo patogénico.", correct: false },
+                    { text: "C) Prevención terciaria, etapa de resolución.", correct: false }
+                ],
+                tip: "💡 Salud Pública: Aunque el embarazo es un estado fisiológico (no una enfermedad), el control prenatal con suplementos busca prevenir complicaciones antes de que aparezcan, actuando en prevención primaria.",
+                image: ""
+            },
+
+            // ------ BIOLOGÍA CELULAR Y MOLECULAR (NUEVAS) ------
+            {
+                module: "BIOLOGÍA",
+                question: "¿Cuál es el proceso metabólico celular que ocurre en la matriz mitocondrial, donde el Acetil-CoA se oxida por completo para producir coenzimas reducidas (NADH y FADH2) y liberar CO2?",
+                options: [
+                    { text: "A) Ciclo de Krebs (o del Ácido Cítrico).", correct: true },
+                    { text: "B) Cadena de transporte de electrones.", correct: false },
+                    { text: "C) Glucólisis citoplasmática.", correct: false }
+                ],
+                tip: "💡 Bioquímica Celular: El ciclo de Krebs toma el Acetil-CoA en la matriz mitocondrial y genera los acarreadores de electrones que luego irán a la membrana interna a producir ATP.",
+                image: ""
+            },
+            {
+                module: "BIOLOGÍA",
+                question: "En las células eucariotas, ¿cuál es el organelo membranoso encargado de la modificación postraduccional, empaquetamiento y distribución de proteínas y lípidos hacia la membrana plasmática o lisosomas?",
+                options: [
+                    { text: "A) Aparato de Golgi.", correct: true },
+                    { text: "B) Retículo Endoplásmico Liso.", correct: false },
+                    { text: "C) Ribosoma libre.", correct: false }
+                ],
+                tip: "💡 Organelos: El Aparato de Golgi funciona como el 'centro de envíos' de la célula. Modifica los productos que vienen del retículo endoplásmico y los etiqueta para su destino final.",
+                image: ""
+            },
+            {
+                module: "BIOLOGÍA",
+                question: "Una molécula de ADN presenta una mutación puntual donde una base de Citosina es sustituida accidentalmente por una Adenina. ¿Cómo se clasifica este tipo específico de mutación según el cambio en las bases nitrogenadas?",
+                options: [
+                    { text: "A) Transversión.", correct: true },
+                    { text: "B) Transición.", correct: false },
+                    { text: "C) Inserción de marco.", correct: false }
+                ],
+                tip: "💡 Genética: Pasar de una pirimidina (C) a una purina (A) es un cambio de diferente tipo, lo que se denomina Transversión. Si fuera de purina a purina (A ↔ G), sería Transición.",
+                image: ""
+            },
+
+            // ------ PENSAMIENTO MATEMÁTICO (NUEVAS) ------
+            {
+                module: "MATEMÁTICAS",
+                question: "Determine la ecuación general de la línea recta que pasa por el punto P(2, -3) y posee una pendiente m = 4:",
+                options: [
+                    { text: "A) 4x - y - 11 = 0", correct: true },
+                    { text: "B) 4x + y - 5 = 0", correct: false },
+                    { text: "C) 2x - 3y + 4 = 0", correct: false }
+                ],
+                tip: "💡 Geometría Analítica: Usas punto-pendiente: y - y1 = m(x - x1) -> y - (-3) = 4(x - 2) -> y + 3 = 4x - 8. Igualando a cero: 4x - y - 11 = 0.",
+                image: ""
+            },
+            {
+                module: "MATEMÁTICAS",
+                question: "Un contenedor médico tiene 5 frascos de solución salina, 3 de glucosa y 2 de ringer lactato. Si un enfermero extrae dos frascos al azar de forma consecutiva y SIN reemplazo, ¿cuál es la probabilidad de que el primero sea de glucosa y el segundo sea de solución salina?",
+                options: [
+                    { text: "A) 1/6", correct: true },
+                    { text: "B) 3/20", correct: false },
+                    { text: "C) 8/19", correct: false }
+                ],
+                tip: "💡 Probabilidad: Total inicial = 10. Probabilidad del 1° (glucosa) = 3/10. Al no haber reemplazo, quedan 9 frascos totales y 5 de solución salina. Probabilidad del 2° = 5/9. Multiplicas: (3/10) * (5/9) = 15/90 = 1/6.",
+                image: ""
+            },
+            {
+                module: "MATEMÁTICAS",
+                question: "Simplifique por completo la siguiente expresión algebraica aplicando las propiedades de los radicales y exponentes: ³√(27x⁶y⁹)",
+                options: [
+                    { text: "A) 3x²y³", correct: true },
+                    { text: "B) 9x³y³", correct: false },
+                    { text: "C) 3x³y²", correct: false }
+                ],
+                tip: "💡 Álgebra: Sacas la raíz cúbica de cada factor: ³√27 = 3. Para las potencias, divides el exponente entre el índice de la raíz: x^(6/3) = x², y^(9/3) = y³.",
+                image: ""
+            },
+
+            // ------ REDACCIÓN INDIRECTA / ESPAÑOL (NUEVAS) ------
+            {
+                module: "ESPAÑOL", 
+                question: "Seleccione la opción que presenta una correcta cohesión gramatical mediante el uso adecuado de los conectores lógicos:",
+                options: [
+                    { text: "A) El tratamiento no mostró efectos secundarios; por lo tanto, se decidió suspender la investigación de inmediato.", correct: false },
+                    { text: "B) El paciente mostró una mejoría notable; no obstante, se mantendrá bajo estricta observación médica 24 horas más.", correct: true },
+                    { text: "C) El laboratorio cuenta con tecnología avanzada, porque no tiene los reactivos necesarios para las pruebas.", correct: false }
+                ],
+                tip: "💡 Cohesión: 'No obstante' es un conector adversativo ideal porque introduce un contraste lógico (mejoró, pero aun así lo vigilan). La opción A y C usan conectores que rompen el sentido de la frase.",
+                image: ""
+            },
+            {
+                module: "ESPAÑOL",
+                question: "Identifique el enunciado que cumple rigurosamente con las normas ortográficas de la RAE respecto al uso de las grafías (b / v / c / s / z):",
+                options: [
+                    { text: "A) La escasez de recursos obligó al laboratorio a tomar una decisión drástica.", correct: true },
+                    { text: "B) Es necesario extirpar el tejido para evitar la propagasión de la infección.", correct: false },
+                    { text: "C) El médico debió previzualizar los efectos del fármaco antes de la secion.", correct: false }
+                ],
+                tip: "💡 Ortografía: 'Escasez' va con 's' en la primera sílaba y termina con 'z'. 'Propagación' es con 'c' (de propagar) y 'sesión' es con 's' en ambas.",
+                image: ""
+            },
+            {
+                module: "ESPAÑOL",
+                question: "Seleccione la opción cuya redacción cumpla con las características del registro formal y del lenguaje científico-académico:",
+                options: [
+                    { text: "A) Los investigadores se aventaron un buen jale analizando las muestras de sangre bien rápido.", correct: false },
+                    { text: "B) Se analizaron las muestras hemáticas de manera expedita con el fin de optimizar los tiempos de diagnóstico.", correct: true },
+                    { text: "C) El estudio salió medio chueco porque el equipo del laboratorio andaba fallando a cada rato.", correct: false }
+                ],
+                tip: "💡 Registro Formal: El EXANI-II exige eliminar modismos ('buen jale', 'medio chueco') y priorizar vocabulario técnico preciso ('muestras hemáticas', 'expedita').",
+                image: ""
+            }, // <-- Unión con la tanda anterior
+            
+            // ====== SEGUNDA EXPANSIÓN MÁXIMA ======
+
+            // ------ PREMEDICINA (AVANZADAS) ------
+            {
+                module: "PREMEDICINA",
+                question: "Un paciente masculino de 55 años, con antecedentes de tabaquismo crónico, acude a consulta por presentar tos productiva con estrías de sangre (hemoptisis), pérdida de peso y fatiga. Al realizar la exploración física, el médico sospecha de una neoplasia pulmonar. ¿Cuál es el nivel de prevención que se está ejecutando al solicitar una tomografía computarizada y una biopsia de inmediato?",
+                options: [
+                    { text: "A) Prevención primaria.", correct: false },
+                    { text: "B) Prevención secundaria.", correct: true },
+                    { text: "C) Prevención terciaria.", correct: false }
+                ],
+                tip: "💡 Salud Pública: La realización de estudios diagnósticos específicos (como tomografías o biopsias) ante la sospecha de una enfermedad busca el diagnóstico temprano y tratamiento oportuno, lo cual pertenece por ley a la Prevención Secundaria.",
+                image: ""
+            },
+            {
+                module: "PREMEDICINA",
+                question: "Durante una cirugía abdominal, el cirujano realiza una incisión que pasa exactamente por la línea media del cuerpo, dividiendo el abdomen en dos mitades simétricas (derecha e izquierda). ¿Qué plano anatómico específico guió esta incisión?",
+                options: [
+                    { text: "A) Plano sagital medio (o mediano).", correct: true },
+                    { text: "B) Plano parasagital.", correct: false },
+                    { text: "C) Plano transversal u horizontal.", correct: false }
+                ],
+                tip: "💡 Planimetría: El plano sagital medio corta el cuerpo justo por el centro para dar dos mitades simétricas (derecha e izquierda). Si fuera paralelo a la línea media pero asimétrico, sería parasagital.",
+                image: ""
+            },
+            {
+                module: "PREMEDICINA",
+                question: "¿Cuál de las siguientes opciones describe de forma correcta la función de las válvulas semilunares (aórtica y pulmonar) durante el ciclo cardíaco?",
+                options: [
+                    { text: "A) Impedir el reflujo de sangre desde las grandes arterias hacia los ventrículos durante la diástole.", correct: true },
+                    { text: "B) Permitir el paso de sangre directamente desde las aurículas hacia los ventrículos durante la sístole.", correct: false },
+                    { text: "C) Regular la presión hidrostática dentro del sistema de las venas cavas superiores.", correct: false }
+                ],
+                tip: "💡 Morfofisiología: Las válvulas semilunares o sigmoideas se cierran al final de la sístole (cuando el corazón se relaja en diástole) para evitar que la sangre que ya salió expulsada hacia la aorta o la arteria pulmonar se regrese al ventrículo.",
+                image: ""
+            },
+
+            // ------ BIOLOGÍA CELULAR Y MOLECULAR (AVANZADAS) ------
+            {
+                module: "BIOLOGÍA",
+                question: "En una célula eucariota vegetal, ¿en qué compartimento o estructura específica del cloroplasto se localizan los complejos fotosintéticos (fotosistemas) encargados de capturar la luz y llevar a cabo la fase luminosa?",
+                options: [
+                    { text: "A) Membrana de los tilacoides.", correct: true },
+                    { text: "B) Estroma cloroplástico.", correct: false },
+                    { text: "C) Espacio intermembranoso.", correct: false }
+                ],
+                tip: "💡 Metabolismo Celular: La fase dependiente de la luz ocurre en las membranas tilacoidales (donde está la clorofila). La fase oscura o Ciclo de Calvin ocurre en el estroma.",
+                image: ""
+            },
+            {
+                module: "BIOLOGÍA",
+                question: "Se analiza una secuencia de ADN y se identifica que la enzima ARN Polimerasa está uniéndose a una región rica en adeninas y timinas (caja TATA) para iniciar la transcripción. ¿Cómo se le denomina técnicamente a esta secuencia de ADN reguladora?",
+                options: [
+                    { text: "A) Promotor.", correct: true },
+                    { text: "B) Operón.", correct: false },
+                    { text: "C) Codón de inicio.", correct: false }
+                ],
+                tip: "💡 Genética Molecular: El promotor es la secuencia de ADN específica que le indica a la ARN polimerasa dónde comenzar a transcribir el gen para formar el ARNm. El codón de inicio (AUG) ya es parte del ARN durante la traducción.",
+                image: ""
+            },
+            {
+                module: "BIOLOGÍA",
+                question: "¿Qué tipo de interacción biológica o enlace químico estabiliza de forma principal la estructura secundaria de las proteínas, como la hélice alfa o la lámina beta?",
+                options: [
+                    { text: "A) Puentes de hidrógeno entre los grupos amida y carbonilo del esqueleto peptídico.", correct: true },
+                    { text: "B) Enlaces disulfuro covalentes entre residuos de cisteína.", correct: false },
+                    { text: "C) Fuerzas de Van der Waals exclusivas de las cadenas laterales hidrofóbicas.", correct: false }
+                ],
+                tip: "💡 Bioquímica: Los puentes de hidrógeno recurrentes en el esqueleto de aminoácidos generan el plegamiento regular de la estructura secundaria. Los puentes disulfuro participan en la estructura terciaria.",
+                image: ""
+            },
+
+            // ------ PENSAMIENTO MATEMÁTICO (AVANZADAS) ------
+            {
+                module: "MATEMÁTICAS",
+                question: "Calcule las coordenadas del centro de la circunferencia cuya ecuación general está dada por: x² + y² - 6x + 8y = 0",
+                options: [
+                    { text: "A) C(3, -4)", correct: true },
+                    { text: "B) C(-3, 4)", correct: false },
+                    { text: "C) C(6, -8)", correct: false }
+                ],
+                tip: "💡 Geometría Analítica: Las coordenadas del centro (h, k) se encuentran dividiendo los coeficientes de x y de y entre -2. h = -6 / -2 = 3; k = 8 / -2 = -4. Centro en (3, -4).",
+                image: ""
+            },
+            {
+                module: "MATEMÁTICAS",
+                question: "En una muestra clínica de 5 pacientes se miden los niveles de glucosa obteniendo los siguientes datos: 90, 95, 100, 100, 115. ¿Cuál es el valor de la desviación media de este conjunto de datos?",
+                options: [
+                    { text: "A) 6.4 mg/dL", correct: true },
+                    { text: "B) 8.0 mg/dL", correct: false },
+                    { text: "C) 100 mg/dL", correct: false }
+                ],
+                tip: "💡 Estadística: Promedio = (90+95+100+100+115)/5 = 100. Desviaciones absolutas respecto a 100: |90-100|=10, |95-100|=5, |100-100|=0, |100-100|=0, |115-100|=15. Suma de desviaciones = 10+5+0+0+15 = 30. Desviación media = 30 / 5 = 6.4.",
+                image: ""
+            },
+            {
+                module: "MATEMÁTICAS",
+                question: "Aplique las propiedades de los logaritmos para simplificar por completo la siguiente expresión matemática: log(x²) + log(y³) - log(z)",
+                options: [
+                    { text: "A) log( (x² * y³) / z )", correct: true },
+                    { text: "B) log( x² + y³ - z )", correct: false },
+                    { text: "C) log(x²y³) * log(z)", correct: false }
+                ],
+                tip: "💡 Álgebra: Las sumas de logaritmos se transforman en multiplicación de sus argumentos, y las restas se transforman en división: log(x² * y³) - log(z) = log( (x²y³) / z ).",
+                image: ""
+            },
+
+            // ------ ESPAÑOL / REDACCIÓN INDIRECTA (AVANZADAS) ------
+            {
+                module: "ESPAÑOL",
+                question: "Elija la opción que presenta una correcta estructuración sintáctica, evitando el error de discordancia del pronombre átono 'les':",
+                options: [
+                    { text: "A) Al paciente bajo tratamiento le administraron los medicamentos indicados por la mañana.", correct: true },
+                    { text: "B) A los médicos residentes le entregaron los expedientes clínicos en la oficina.", correct: false },
+                    { text: "C) Al grupo de enfermeras les informaron sobre el cambio de turno imprevisto.", correct: false }
+                ],
+                tip: "💡 Redacción Indirecta: El pronombre debe concordar en número con el complemento indirecto. En la opción B, debe ser 'les entregaron' (a los médicos). En la C, 'Al grupo' es singular, por lo que exige 'le informaron'. La A es impecable.",
+                image: ""
+            },
+            {
+                module: "ESPAÑOL",
+                question: "Identifique el enunciado que presenta una ortografía impecable de acuerdo con las normas de acentuación gráfica de palabras compuestas y adverbios en '-mente':",
+                options: [
+                    { text: "A) El cirujano intervino rápidamente al paciente aplicando un procedimiento teórico-práctico.", correct: true },
+                    { text: "B) El cirujano intervino rapidamente al paciente aplicando un procedimiento teorico-practico.", correct: false },
+                    { text: "C) El cirujano intervino rapidámente al paciente aplicando un procedimiento teórico-practico.", correct: false }
+                ],
+                tip: "💡 Ortografía: Los adverbios terminados en '-mente' mantienen la tilde del adjetivo original (rápida -> rápidamente). En palabras unidas por guion, ambos elementos conservan su acentuación original si la tenían (teórico-práctico).",
+                image: ""
+            },
+            {
+                module: "ESPAÑOL",
+                question: "Determine qué conector discursivo completa de manera cohesiva y lógica la siguiente oración clínica: 'Los resultados de las pruebas moleculares resultaron negativos; ________, se descartó de forma definitiva el aislamiento del patógeno.'",
+                options: [
+                    { text: "A) por consiguiente,", correct: true },
+                    { text: "B) por el contrario,", correct: false },
+                    { text: "C) no obstante,", correct: false }
+                ],
+                tip: "💡 Cohesión: La relación entre la falta de patógenos y su descarte es de causa-efecto. 'Por consiguiente', 'por lo tanto' o 'en consecuencia' son los conectores idóneos para este registro científico.",
+                image: ""
+            }
+        ];
+
+        let mode = ''; let subject = ''; let currentMazo = []; let score = 0; let lives = 3; let timer = null; let timeLeft = 25;
+        function goHome() { clearInterval(timer); document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById('screen-home').classList.add('active'); }
+        function openSelection(m) { mode = m; document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById('screen-select').classList.add('active'); document.getElementById('select-title').innerText = `Modo: ${m === 'flashcard' ? '🗂️ Flashcards' : m === 'timed' ? '⏱️ Contra Reloj' : '🛡️ Supervivencia'}`; }
+        function openDirect(subj, m) { mode = m; subject = subj; initGame(); }
+        function startModule(subj) { subject = subj; initGame(); }
+
+        function initGame() {
+            score = 0; lives = 3;
+            if (subject === 'TODO') { currentMazo = [...questionBank]; } 
+            else { currentMazo = questionBank.filter(q => q.module === subject); }
+            currentMazo.sort(() => Math.random() - 0.5);
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            if (mode === 'flashcard') { document.getElementById('screen-flashcard').classList.add('active'); renderFC(); } 
+            else { document.getElementById('screen-quiz').classList.add('active'); document.getElementById('qz-timer').style.display = (mode === 'timed') ? 'block' : 'none'; document.getElementById('qz-hearts').style.display = (mode === 'game') ? 'block' : 'none'; renderQuiz(); }
+        }
+
+        function renderFC() {
+            if (currentMazo.length === 0) { return finish(); }
+            document.getElementById('fc-card').classList.remove('flipped');
+            document.getElementById('fc-feedback').style.display = 'none'; document.getElementById('fc-next').style.display = 'none';
+            let q = currentMazo[0];
+            document.getElementById('fc-badge').innerText = q.module; document.getElementById('fc-question').innerText = q.question;
+            document.getElementById('fc-count').innerText = `En Cola: ${currentMazo.length}`;
+            document.getElementById('fc-reading-container').innerHTML = q.reading ? `<div class="reading-text-box"><b>Caso Clínico / Texto:</b><br>${q.reading}</div>` : '';
+            document.getElementById('fc-media-container').innerHTML = q.image ? `<div class="interactive-image-box">${q.image}</div>` : '';
+            let optBox = document.getElementById('fc-options'); optBox.innerHTML = '';
+            q.options.forEach(opt => {
+                let b = document.createElement('button'); b.className = 'opt-btn'; b.innerText = opt.text; b.onclick = () => checkFC(b, opt.correct, q); optBox.appendChild(b);
+            });
+            updateProgress('fc');
+        }
+        function toggleFlip() { document.getElementById('fc-card').classList.toggle('flipped'); }
+        function checkFC(btn, isCorrect, q) {
+            document.querySelectorAll('#fc-options .opt-btn').forEach(b => b.disabled = true);
+            let f = document.getElementById('fc-feedback'); f.style.display = 'block';
+            if (isCorrect) { btn.style.background = '#00e676'; btn.style.color = '#000'; f.className = "feedback-box correct"; f.innerHTML = `🔥 ¡Correcto! +10 PV.<br>${q.tip}`; score += 10; currentMazo.shift(); } 
+            else { btn.style.background = '#ff1744'; f.className = "feedback-box wrong"; f.innerHTML = `❌ Incorrecto. Reinyectando al final.<br>${q.tip}`; currentMazo.push(currentMazo.shift()); }
+            document.getElementById('fc-next').style.display = 'block';
+        }
+        function nextFC() { renderFC(); }
+
+        function renderQuiz() {
+            if (currentMazo.length === 0 || (mode === 'game' && lives <= 0)) { return finish(); }
+            document.getElementById('qz-feedback').style.display = 'none'; document.getElementById('qz-next').style.display = 'none';
+            document.getElementById('qz-score').innerText = `PV: ${score}`;
+            let q = currentMazo[0];
+            document.getElementById('qz-badge').innerText = q.module; document.getElementById('qz-question').innerText = q.question;
+            document.getElementById('qz-reading-container').innerHTML = q.reading ? `<div class="reading-text-box"><b>Caso Clínico / Texto:</b><br>${q.reading}</div>` : '';
+            document.getElementById('qz-media-container').innerHTML = q.image ? `<div class="interactive-image-box">${q.image}</div>` : '';
+            if (mode === 'game') { document.getElementById('qz-hearts').innerText = '❤️'.repeat(lives) + '🖤'.repeat(3 - lives); }
+            let box = document.getElementById('qz-options'); box.innerHTML = '';
+            q.options.forEach(opt => {
+                let b = document.createElement('button'); b.className = 'opt-btn'; b.innerText = opt.text; b.onclick = () => checkQuiz(b, opt.correct, q); box.appendChild(b);
+            });
+            updateProgress('qz'); if (mode === 'timed') { startClock(); }
+        }
+        function startClock() { clearInterval(timer); timeLeft = 25; document.getElementById('qz-timer').innerText = `⏱️ ${timeLeft}s`; timer = setInterval(() => { timeLeft--; document.getElementById('qz-timer').innerText = `⏱️ ${timeLeft}s`; if (timeLeft <= 0) { clearInterval(timer); expireQuiz(); } }, 1000); }
+        function expireQuiz() { document.querySelectorAll('#qz-options .opt-btn').forEach(b => b.disabled = true); let f = document.getElementById('qz-feedback'); f.style.display = 'block'; f.className = "feedback-box wrong"; f.innerHTML = "⏱️ ¡Tiempo agotado! La pregunta regresa al final de la cola."; currentMazo.push(currentMazo.shift()); document.getElementById('qz-next').style.display = 'block'; }
+        function checkQuiz(btn, isCorrect, q) {
+            clearInterval(timer); document.querySelectorAll('#qz-options .opt-btn').forEach(b => b.disabled = true);
+            let f = document.getElementById('qz-feedback'); f.style.display = 'block';
+            if (isCorrect) { btn.style.background = '#00e676'; btn.style.color = '#000'; f.className = "feedback-box correct"; f.innerHTML = `⚡ ¡Excelente! +10 PV.<br>${q.tip}`; score += 10; currentMazo.shift(); } 
+            else { btn.style.background = '#ff1744'; f.className = "feedback-box wrong"; if (mode === 'game') { lives--; f.innerHTML = `❌ Error. Pierdes una vida.<br>${q.tip}`; } else { f.innerHTML = `❌ Error. recirculando reactivo.<br>${q.tip}`; } currentMazo.push(currentMazo.shift()); }
+            document.getElementById('qz-next').style.display = 'block';
+        }
+        function nextQuiz() { renderQuiz(); }
+        function updateProgress(prefix) { let total = questionBank.filter(q => subject === 'TODO' || q.module === subject).length; let current = currentMazo.length; let percent = ((total - current) / total) * 100; document.getElementById(`${prefix}-progress`).style.width = `${percent}%`; }
+        function finish() { clearInterval(timer); document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById('screen-results').classList.add('active'); document.getElementById('res-score').innerText = `${score} PV`; document.getElementById('res-message').innerText = (mode === 'game' && lives <= 0) ? "Te quedaste sin vidas en el mazo extremo. ¡Analiza los tips y vuelve a intentarlo!" : "¡Eres un monstruo! Has limpiado exitosamente toda la bomba de reactivos."; }
+    </script>
+</body>
+</html>
